@@ -14,10 +14,8 @@ p.add_argument("--scene-code", default=None, help="e.g. S1 or S2. Auto-inferred 
 p.add_argument("--encoding", default="gbk", help="Default gbk to match the uploaded CSV; use utf-8-sig if preferred.")
 p.add_argument("--force", action="store_true", help="Rerun even if checkpoints/results already exist.")
 p.add_argument("--collect-only", action="store_true", help="Only collect existing .npz outputs into CSV; do not train/evaluate.")
-p.add_argument("--lodo-configs", default=None, help="Comma-separated LODO config paths. Only used by E3.")
 args = p.parse_args()
 experiments = [x.strip() for x in args.experiments.split(",") if x.strip()]
-lodo_configs = [x.strip() for x in args.lodo_configs.split(",") if x.strip()] if args.lodo_configs else None
 run_paper_experiments(
     args.config,
     experiments=experiments,
@@ -28,5 +26,4 @@ run_paper_experiments(
     encoding=args.encoding,
     force=args.force,
     collect_only=args.collect_only,
-    lodo_configs=lodo_configs,
 )
