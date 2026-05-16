@@ -25,3 +25,9 @@ logs/
 
 # temp
 *.log
+
+# allow thesis project source data and experiment files
+!src/magloc/data/
+!src/magloc/data/**
+!src/magloc/experiments/
+!src/magloc/experiments/**

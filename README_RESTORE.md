@@ -208,3 +208,5 @@ python scripts/run_paper_experiments.py \
 运行记录
 Error #15: Initializing libomp.dll, but found libiomp5md.dll already initialized. OpenMP 运行时冲突问题
 set KMP_DUPLICATE_LIB_OK=TRUE
+添加代码，实现预训练和训练保存csv和json文件的同时将loss曲线画为折线图保存在同目录下
+我现在需要跑一些faiss检索定位的定位轨迹图和seqdeq的检索定位轨迹图，最好将轨迹图设置为一个公用模块，每次跑实验都导入并调用它画轨迹图到本实验对应的文件夹中，帮我修改代码，并告诉我应该以何种顺序运行哪些命令

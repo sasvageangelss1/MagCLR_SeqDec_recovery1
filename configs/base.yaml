@@ -2,11 +2,11 @@ seed: 2026
 project_name: MagCLR-SeqDec
 
 paths:
-  data_root: data/npy_output_wenguan
+  data_root: data/npy_output
   output_root: experiments
 
 scene:
-  name: scenario_2
+  name: scenario_1
   # scene_filter can be a substring such as "信息" or "文管". Empty means use all files under split dirs.
 #  scene_filter: "信息"
 
