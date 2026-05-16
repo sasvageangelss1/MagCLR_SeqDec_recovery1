@@ -1,0 +1,123 @@
+seed: 2026
+project_name: MagCLR-SeqDec
+
+paths:
+  data_root: data/npy_output_wenguan
+  output_root: experiments
+
+scene:
+  name: scenario_2
+  # scene_filter can be a substring such as "信息" or "文管". Empty means use all files under split dirs.
+#  scene_filter: "信息"
+
+split:
+  train_dir: train
+  val_dir: val
+  test_dir: test
+  file_pattern: "*.npy"
+  # Used by scripts/make_splits.py when rebuilding splits from raw converted npy files.
+  split_by: trajectory
+  train_ratio: 0.8
+  val_ratio: 0.1
+  test_ratio: 0.1
+  lodo_test_device: null
+
+preprocess:
+  window_mode: equal_distance # equal_distance for Full Model; fixed_time for A1 w/o Equal-Distance.
+  window_size: 128          # Thesis default: 128 resampled points. Old config used 256; keep 128 for thesis consistency.
+  window_length_m: 2.0
+  stride_m: 1.0
+  time_stride_points: null   # optional fixed-time baseline stride; null means infer from stride_m and sampling density
+  zscore: true
+  detrend_ema: false        # Thesis only requires Z-score; enable only as extra ablation.
+  ema_alpha: 0.1
+  msfe: true
+  diff_k: 1
+
+augmentation:
+  rotation_max_deg: 20
+  noise_sigma: 0.01
+  crop_ratio_min: 0.90      # keep mild; excessive cropping changes end-point label semantics
+  crop_ratio_max: 1.00
+  grid_jitter_prob: 0.20
+  grid_jitter_std: 0.04
+  channel_dropout_prob: 0.00
+  channel_shuffle_prob: 0.00
+
+model:
+  in_channels: 7
+  embed_dim: 256
+  proj_dim: 128
+  depths: [2, 2, 4, 2]
+  dims: [64, 128, 256, 256]
+  kernel_size: 7
+  layer_scale_init: 1.0e-6
+
+pretrain:
+  epochs: 100
+  batch_size: 128
+  lr: 0.001
+  weight_decay: 0.0001
+  temperature: 0.1
+  num_workers: 0
+  save_every: 10
+  early_stop_patience: 20
+
+finetune:
+  epochs: 80
+  batch_size: 128
+  lr: 0.001
+  weight_decay: 0.0001
+  huber_beta: 1.0
+  dropout: 0.10
+  label_norm: true
+  freeze_encoder_epochs: 10
+  unfreeze_last_stages: true
+  early_stop_patience: 20
+
+retrieval:
+  k: 3
+  metric: cosine
+  tau: 0.30
+
+seqdec:
+  k: 3
+  tau: 0.30
+  spatial_sigma_m: 1.20
+  confidence_alpha: 0.75
+  expected_step_m: 1.0       # should match stride_m unless window centers are used differently
+  displacement_sigma_m: 0.80
+  max_jump_m: 2.50
+  beta: 0.45
+  use_confidence: true
+  use_displacement: true
+  use_jump_suppression: true
+
+evaluation:
+  jump_threshold_m: 2.50
+  bootstrap_rounds: 0
+
+
+backbone_compare:
+  # Thesis E1: supervised training only, no contrastive pretraining.
+  backbones: [rnn, lstm, cnn_tcn, convnext_lite_1d]
+  epochs: 80
+  batch_size: 128
+  lr: 0.001
+  min_lr: 0.00001
+  weight_decay: 0.0001
+  huber_beta: 1.0
+  label_norm: true
+  train_augment: false       # keep false for a cleaner backbone-only comparison
+  dropout: 0.10
+  reg_hidden_dim: 128
+  rnn_hidden_dim: 128
+  rnn_num_layers: 2
+  bidirectional: false
+  tcn_channels: 128
+  tcn_kernel_size: 5
+  tcn_dilations: [1, 2, 4, 8]
+  grad_clip: 1.0
+  num_workers: 0
+  torch_num_threads: 1       # safer/faster on CPU-only code-review machines
+  early_stop_patience: 20

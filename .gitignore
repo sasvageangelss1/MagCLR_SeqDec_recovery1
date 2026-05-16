@@ -1,0 +1,27 @@
+# IDE
+.idea/
+
+# python
+__pycache__/
+*.pyc
+
+# env
+.venv/
+env/
+
+# datasets
+data/
+*.npy
+*.npz
+
+# model checkpoints
+*.pth
+*.pt
+
+# experiment outputs
+experiments/
+outputs/
+logs/
+
+# temp
+*.log
