@@ -120,7 +120,13 @@ def run_finetune(config_path: str, pretrained_ckpt: str | None = None, output_di
         if metrics["mean_error"] < best:
             best = metrics["mean_error"]
             bad = 0
-            torch.save({"model": model.state_dict(), "head": head.state_dict()}, best_path)
+            torch.save({
+                "model": model.state_dict(),
+                "head": head.state_dict(),
+                "pos_mean": pos_mean if label_norm else None,
+                "pos_std": pos_std if label_norm else None,
+                "label_norm": label_norm,
+            }, best_path)
             save_metrics(metrics, out / "regression_val_metrics.json")
         else:
             bad += 1

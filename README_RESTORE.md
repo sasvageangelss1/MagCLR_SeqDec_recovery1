@@ -39,7 +39,8 @@ python scripts/smoke_test.py
 ```bash
 set PYTHONPATH=$PWD/src
 python scripts/train_pretrain.py --config configs/base.yaml
-python scripts/train_regression.py --config configs/base.yaml --pretrained-ckpt experiments/scenario_1/pretrain/pretrain_best.pth
+python scripts/train_regression.py --config configs/base.yaml --pretrained-ckpt experiments/scenario_3/pretrain/pretrain_best.pth
+python scripts/train_regression.py --config configs/base.yaml
 python scripts/evaluate_regression.py --config configs/base.yaml --ckpt experiments/scenario_1/finetune/regression_best.pth
 python scripts/evaluate_retrieval.py --config configs/base.yaml --encoder-ckpt experiments/scenario_1/pretrain/pretrain_best.pth
 python scripts/evaluate_seqdec.py --config configs/base.yaml --encoder-ckpt experiments/scenario_1/pretrain/pretrain_best.pth
@@ -208,5 +209,18 @@ python scripts/run_paper_experiments.py \
 运行记录
 Error #15: Initializing libomp.dll, but found libiomp5md.dll already initialized. OpenMP 运行时冲突问题
 set KMP_DUPLICATE_LIB_OK=TRUE
-添加代码，实现预训练和训练保存csv和json文件的同时将loss曲线画为折线图保存在同目录下
-我现在需要跑一些faiss检索定位的定位轨迹图和seqdeq的检索定位轨迹图，最好将轨迹图设置为一个公用模块，每次跑实验都导入并调用它画轨迹图到本实验对应的文件夹中，帮我修改代码，并告诉我应该以何种顺序运行哪些命令
+
+seq解码推荐的命令运行顺序
+假设你已经有训练好的预训练模型 pretrain_best.pth：
+# ── 1. 预训练（生成 loss_history.json/csv + loss_curve.png）───────────
+python scripts/train_pretrain.py --config configs/base.yaml
+# ── 2. 微调（生成 loss_history.json/csv + loss_curve.png）────────────
+python scripts/train_regression.py --config configs/base.yaml --pretrained-ckpt experiments/<scene>/pretrain/pretrain_best.pth
+# ── 3. FAISS 检索定位评估（生成轨迹图 + 误差图）─────────────────────
+python scripts/evaluate_retrieval.py \
+    --config configs/base.yaml \
+    --encoder-ckpt experiments/<scene>/pretrain/pretrain_best.pth
+# ── 4. SeqDec 检索定位评估（生成轨迹图 + 误差图 + 置信度图）────────
+python scripts/evaluate_seqdec.py \
+    --config configs/base.yaml \
+    --encoder-ckpt experiments/<scene>/pretrain/pretrain_best.pth

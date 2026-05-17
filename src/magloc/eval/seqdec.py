@@ -4,14 +4,14 @@ from dataclasses import dataclass
 from typing import Dict, Tuple
 
 import numpy as np
-
+import pdb
 
 @dataclass
 class SeqDecConfig:
     tau: float = 0.30
     spatial_sigma_m: float = 1.20
     confidence_alpha: float = 0.75
-    expected_step_m: float = 1.0
+    expected_step_m: float = 0.5
     displacement_sigma_m: float = 0.80
     max_jump_m: float = 2.50
     beta: float = 0.45
@@ -55,7 +55,6 @@ def emission_prob(scores: np.ndarray, positions: np.ndarray, cfg: SeqDecConfig) 
     emit = emit / (emit.sum(axis=1, keepdims=True) + 1e-12)
     return emit.astype(np.float32), conf.astype(np.float32), detail
 
-
 def transition_matrix(prev_pos: np.ndarray, cur_pos: np.ndarray, cfg: SeqDecConfig) -> np.ndarray:
     d = np.linalg.norm(prev_pos[:, None, :] - cur_pos[None, :, :], axis=2)  # (K,K)
     if cfg.use_jump_suppression:
@@ -69,13 +68,25 @@ def transition_matrix(prev_pos: np.ndarray, cur_pos: np.ndarray, cfg: SeqDecConf
         trans = feasible.astype(np.float32)
     row_sum = trans.sum(axis=1, keepdims=True)
     bad = row_sum[:, 0] <= 1e-12
+    normal = ~bad
+    if np.any(normal):
+        trans[normal] = trans[normal] / (row_sum[normal] + 1e-12)
+
     if np.any(bad):
-        # fallback: if all candidates are filtered, keep the least-displacement candidate instead of crashing
-        trans[bad] = 0.0
-        best = np.argmin(d[bad], axis=1)
-        trans[np.where(bad)[0], best] = 1.0
-        row_sum = trans.sum(axis=1, keepdims=True)
-    return (trans / (row_sum + 1e-12)).astype(np.float32)
+        # bad 行：退回到未经过 jump_suppression 硬过滤的原始转移权重
+        # 先归一化 raw_trans，再乘距离惩罚和整体惩罚
+        denom = float(cfg.max_jump_m) + 1e-12
+
+        raw_bad = trans[bad]
+        raw_bad_sum = raw_bad.sum(axis=1, keepdims=True)
+        normalized_raw_bad = raw_bad / (raw_bad_sum + 1e-12)
+
+        distance_penalty = np.exp(-(d[bad] / denom)).astype(np.float32)
+
+
+        trans[bad] = normalized_raw_bad * distance_penalty
+
+    return trans.astype(np.float32)
 
 
 def viterbi_decode(scores: np.ndarray, positions: np.ndarray, cfg: SeqDecConfig = SeqDecConfig()) -> Dict[str, np.ndarray]:
