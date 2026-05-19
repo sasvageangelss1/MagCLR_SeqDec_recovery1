@@ -382,13 +382,20 @@ class PaperExperimentRunner:
         return p
 
     def _ensure_eval_pdr(self, cfg_path: str, cfg: Dict) -> Path:
-        """确保 PDR（步行航位推算）基线评估完成。PDR 无需训练，直接基于惯性传感器做积分定位。"""
+        """确保 PDR（步行航位推算）基线评估完成。"""
         p = _out_root(cfg) / "eval_pdr" / f"{cfg['split'].get('test_dir', 'test')}_pdr_preds.npz"
         if self.collect_only:
             return p
         if self.force or not p.exists():
-            out = _out_root(cfg) / "eval_pdr"
-            evaluate_pdr(cfg_path, output_dir=str(out))
+            from magloc.experiments.evaluate_baselines import evaluate_pdr
+            pdr_cfg = cfg.get("pdr", {})
+            evaluate_pdr(
+                cfg_path,
+                gyro_weight=float(pdr_cfg.get("gyro_weight", 0.97)),
+                prominence=float(pdr_cfg.get("prominence", 0.5)),
+                min_interval=int(pdr_cfg.get("min_interval", 15)),
+                step_length=float(pdr_cfg.get("step_length", 0.65)),
+            )
         else:
             print(f"[reuse] pdr pred: {p}")
         return p
@@ -529,12 +536,35 @@ class PaperExperimentRunner:
             print(f"[lodo] skip fold {held_out!r}: no val files remain after exclusion.")
             return [], [], []
 
+        # Verify test split has files before running any training/evaluation.
+        # The held-out device may exist only in train/val (not in test), so we use
+        # the ORIGINAL config (no scene_filter) to check the test split.
+        try:
+            test_root = Path(self.cfg["paths"]["data_root"])
+            test_split_dir = self.cfg["split"].get("test_dir", "test")
+            test_pattern = self.cfg["split"].get("file_pattern", "*.npy")
+            test_scene_filter = self.cfg.get("scene", {}).get("scene_filter") or None
+            test_files_check = list_npy_files(
+                test_root / test_split_dir,
+                pattern=test_pattern,
+                scene_filter=test_scene_filter,
+            )
+        except Exception:
+            test_files_check = []
+        if not test_files_check:
+            print(f"[lodo] skip fold {held_out!r}: test split is empty (device not present in test set).")
+            return [], [], []
+
         # 在排除 held_out 的配置下执行完整流水线
         lpre = self._ensure_pretrain(str(lcfg_path), lcfg)
         lft = self._ensure_finetune(str(lcfg_path), lcfg, lpre, scratch=False)
-        lreg = self._ensure_eval_regression(str(lcfg_path), lcfg, lft, scratch=False)
-        lret = self._ensure_eval_retrieval(str(lcfg_path), lcfg, lpre)
-        lseq = self._ensure_eval_seqdec(str(lcfg_path), lcfg, lpre)
+        try:
+            lreg = self._ensure_eval_regression(str(lcfg_path), lcfg, lft, scratch=False)
+            lret = self._ensure_eval_retrieval(str(lcfg_path), lcfg, lpre)
+            lseq = self._ensure_eval_seqdec(str(lcfg_path), lcfg, lpre)
+        except FileNotFoundError as e:
+            print(f"[lodo] skip fold {held_out!r}: test split not found after exclusion. ({e})")
+            return [], [], []
 
         faiss_errs, mlp_errs, seq_errs = [], [], []
         if Path(lret).exists():
