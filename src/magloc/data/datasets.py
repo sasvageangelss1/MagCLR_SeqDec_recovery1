@@ -13,15 +13,8 @@ from .preprocessing import local_variation_features
 
 @dataclass
 class AugmentConfig:
-    rotation_max_deg: float = 20.0
+    rotation_max_deg: float = 5.0
     noise_sigma: float = 0.01
-    crop_ratio_min: float = 0.90
-    crop_ratio_max: float = 1.00
-    grid_jitter_prob: float = 0.20
-    grid_jitter_std: float = 0.04
-    channel_dropout_prob: float = 0.0
-    channel_shuffle_prob: float = 0.0
-
 
 class ContrastiveWindowDataset(Dataset):
     def __init__(self, windows: np.ndarray, labels: Optional[np.ndarray] = None, diff_k: int = 1, aug: AugmentConfig = AugmentConfig(), use_local_variation: bool = True):
@@ -35,13 +28,13 @@ class ContrastiveWindowDataset(Dataset):
         return len(self.windows)
 
     def _view(self, x: np.ndarray) -> np.ndarray:
-        x = random_end_aligned_crop(x, self.aug.crop_ratio_min, self.aug.crop_ratio_max)
-        if np.random.rand() < self.aug.grid_jitter_prob:
-            x = distance_grid_jitter(x, self.aug.grid_jitter_std)
+        # x = random_end_aligned_crop(x, self.aug.crop_ratio_min, self.aug.crop_ratio_max)
+        # if np.random.rand() < self.aug.grid_jitter_prob:
+        #     x = distance_grid_jitter(x, self.aug.grid_jitter_std)
         x = random_rotation_3d(x, self.aug.rotation_max_deg)
         x = jitter(x, self.aug.noise_sigma)
-        x = maybe_channel_dropout(x, self.aug.channel_dropout_prob)
-        x = maybe_channel_shuffle(x, self.aug.channel_shuffle_prob)
+        # x = maybe_channel_dropout(x, self.aug.channel_dropout_prob)
+        # x = maybe_channel_shuffle(x, self.aug.channel_shuffle_prob)
         feat = local_variation_features(x, diff_k=self.diff_k, use_local_variation=self.use_local_variation)
         return feat.T.astype(np.float32)  # (7,N)
 
@@ -68,9 +61,9 @@ class RegressionWindowDataset(Dataset):
 
     def _make(self, x: np.ndarray) -> np.ndarray:
         if self.augment:
-            x = random_end_aligned_crop(x, self.aug.crop_ratio_min, self.aug.crop_ratio_max)
-            if np.random.rand() < self.aug.grid_jitter_prob:
-                x = distance_grid_jitter(x, self.aug.grid_jitter_std)
+            # x = random_end_aligned_crop(x, self.aug.crop_ratio_min, self.aug.crop_ratio_max)
+            # if np.random.rand() < self.aug.grid_jitter_prob:
+            #     x = distance_grid_jitter(x, self.aug.grid_jitter_std)
             x = random_rotation_3d(x, min(self.aug.rotation_max_deg, 10.0))
             x = jitter(x, min(self.aug.noise_sigma, 0.006))
         return local_variation_features(x, diff_k=self.diff_k, use_local_variation=self.use_local_variation).T.astype(np.float32)

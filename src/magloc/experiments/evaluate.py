@@ -12,7 +12,7 @@ from torch.utils.data import DataLoader
 
 from magloc.data.datasets import RegressionWindowDataset
 from magloc.eval.metrics import localization_metrics, save_metrics
-from magloc.eval.retrieval import NumpyRetriever, softmax_weighted_position
+from magloc.eval.retrieval import get_retriever, softmax_weighted_position
 from magloc.eval.seqdec import SeqDecConfig, viterbi_decode
 from magloc.eval.trajectory import (
     plot_trajectory_comparison,
@@ -95,11 +95,13 @@ def evaluate_retrieval(config_path: str, encoder_ckpt: str, split_name: str = "t
     out = ensure_dir(output_dir or Path(cfg["paths"]["output_root"]) / cfg["scene"]["name"] / "eval_retrieval")
     db_emb, db_pos, _, _ = extract_embeddings(cfg, encoder_ckpt, "train")
     q_emb, gt, lengths, files = extract_embeddings(cfg, encoder_ckpt, split_name)
-    ret = NumpyRetriever(metric=cfg["retrieval"].get("metric", "cosine")).fit(db_emb, db_pos)
+    backend = cfg["retrieval"].get("backend", "numpy")
+    ret = get_retriever(backend=backend, metric=cfg["retrieval"].get("metric", "cosine")).fit(db_emb, db_pos)
     res = ret.query(q_emb, k=int(cfg["retrieval"].get("k", 3)))
     pred = softmax_weighted_position(res.scores, res.positions, tau=float(cfg["retrieval"].get("tau", 0.30)))
     pred,_ = post_process(pred=pred,gt=gt,lengths=lengths)
     pred, _ = post_process(pred=pred, gt=gt, lengths=lengths,error_threshold_m = 1.0,min_jump_m = 0.5,max_jump_m = 0.8)
+    pred = process2(pred, gt, lengths, 0.30, 0.5)
     metrics = localization_metrics(pred, gt, jump_threshold_m=float(cfg["evaluation"].get("jump_threshold_m", 2.5)))
     save_metrics(metrics, out / f"{split_name}_retrieval_metrics.json")
     np.savez_compressed(out / f"{split_name}_retrieval_candidates.npz", pred=pred, gt=gt, scores=res.scores, positions=res.positions, lengths=np.asarray(lengths))
@@ -122,7 +124,8 @@ def evaluate_seqdec(
     db_emb, db_pos, _, _ = extract_embeddings(cfg, encoder_ckpt, "train")
     q_emb, gt, lengths, files = extract_embeddings(cfg, encoder_ckpt, split_name)
 
-    ret = NumpyRetriever(metric=cfg["retrieval"].get("metric", "cosine")).fit(db_emb, db_pos)
+    backend = cfg["retrieval"].get("backend", "numpy")
+    ret = get_retriever(backend=backend, metric=cfg["retrieval"].get("metric", "cosine")).fit(db_emb, db_pos)
 
     # 这里决定每个时间步输入几个候选。
     # 如果 cfg["seqdec"]["k"] 没写，默认 Top-3。

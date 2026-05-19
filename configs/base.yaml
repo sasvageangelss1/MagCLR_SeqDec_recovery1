@@ -2,11 +2,11 @@ seed: 2026
 project_name: MagCLR-SeqDec
 
 paths:
-  data_root: data/npy_output
+  data_root: data/npy_output_wenguan1
   output_root: experiments
 
 scene:
-  name: scenario_1
+  name: scenario_2
   # scene_filter can be a substring such as "信息" or "文管". Empty means use all files under split dirs.
 #  scene_filter: "信息"
 
@@ -35,14 +35,14 @@ preprocess:
   diff_k: 1
 
 augmentation:
-  rotation_max_deg: 20
+  rotation_max_deg: 5
   noise_sigma: 0.01
-  crop_ratio_min: 0.90      # keep mild; excessive cropping changes end-point label semantics
-  crop_ratio_max: 1.00
-  grid_jitter_prob: 0.20
-  grid_jitter_std: 0.04
-  channel_dropout_prob: 0.00
-  channel_shuffle_prob: 0.00
+  # crop_ratio_min: 0.90      # keep mild; excessive cropping changes end-point label semantics
+  # crop_ratio_max: 1.00
+  # grid_jitter_prob: 0.20
+  # grid_jitter_std: 0.04
+  # channel_dropout_prob: 0.00
+  # channel_shuffle_prob: 0.00
 
 model:
   in_channels: 7
@@ -64,7 +64,7 @@ pretrain:
   early_stop_patience: 20
 
 finetune:
-  epochs: 180
+  epochs: 150
   batch_size: 128
   lr: 0.001
   weight_decay: 0.0001
@@ -79,6 +79,8 @@ retrieval:
   k: 3
   metric: cosine
   tau: 0.30
+  # Retriever backend: "numpy" (brute-force, default) or "faiss" (FAISS IndexFlatIP/IndexFlatL2).
+  backend: numpy
 
 seqdec:
   k: 3

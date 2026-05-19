@@ -39,11 +39,11 @@ python scripts/smoke_test.py
 ```bash
 set PYTHONPATH=$PWD/src
 python scripts/train_pretrain.py --config configs/base.yaml
-python scripts/train_regression.py --config configs/base.yaml --pretrained-ckpt experiments/scenario_3/pretrain/pretrain_best.pth
+python scripts/train_regression.py --config configs/base.yaml --pretrained-ckpt experiments/scenario_1/pretrain/pretrain_best.pth
 python scripts/train_regression.py --config configs/base.yaml
-python scripts/evaluate_regression.py --config configs/base.yaml --ckpt experiments/scenario_1/finetune/regression_best.pth
-python scripts/evaluate_retrieval.py --config configs/base.yaml --encoder-ckpt experiments/scenario_1/pretrain/pretrain_best.pth
-python scripts/evaluate_seqdec.py --config configs/base.yaml --encoder-ckpt experiments/scenario_1/pretrain/pretrain_best.pth
+python scripts/evaluate_regression.py --config configs/base.yaml --ckpt experiments/scenario_2/finetune/regression_best.pth
+python scripts/evaluate_retrieval.py --config configs/base.yaml --encoder-ckpt experiments/scenario_2/pretrain/pretrain_best.pth
+python scripts/evaluate_seqdec.py --config configs/base.yaml --encoder-ckpt experiments/scenario_2/pretrain/pretrain_best.pth
 ```
 
 ## 5. 与论文口径一致的核心默认值

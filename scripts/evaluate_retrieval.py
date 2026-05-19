@@ -1,3 +1,8 @@
+"""
+检索评估脚本：用预训练编码器对测试集做 Top-K 候选位置检索。
+流程：提取编码特征 → 用 FAISS 建立索引 → 为每个查询找最近邻候选
+输出：{candidates, ground_truth} 的 NPZ 文件，包含每帧的检索误差
+"""
 from __future__ import annotations
 import argparse
 from magloc.experiments.evaluate import evaluate_retrieval

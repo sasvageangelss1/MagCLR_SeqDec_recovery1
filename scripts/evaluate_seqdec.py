@@ -1,3 +1,8 @@
+"""
+序列解码评估脚本：用预训练编码器对测试集做时序路径解码定位（SeqDec）。
+流程：提取编码特征 → 加位移一致性约束 → 跳点抑制 → 置信度加权 → 输出最优轨迹
+输出：{seqdec_trajectory, ground_truth} 的 NPZ 文件
+"""
 from __future__ import annotations
 import argparse
 from magloc.experiments.evaluate import evaluate_seqdec

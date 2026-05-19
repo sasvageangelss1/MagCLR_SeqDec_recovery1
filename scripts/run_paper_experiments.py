@@ -1,3 +1,19 @@
+"""
+一键运行论文全部实验并导出标准格式 CSV 的入口脚本。
+支持的实验类型：
+  e1          - E1 主干网络对比（RNN/LSTM/CNN+TCN/ConvNeXt 等有监督基线）
+  e2          - E2 对比学习预训练有效性验证（Scratch vs Pretrain）
+  e3          - E3 下游定位方式与跨设备泛化综合实验（LODO）
+  a1          - A1 等空间窗口构造消融实验
+  a2          - A2 表征增强机制综合消融（数据增强 / 局部变异特征）
+  continuous  - 整体连续定位性能对比（含 WKNN/PDR 基线 + MagCLR 全套方法）
+  transition  - 状态转移约束消融（位移一致性 / 跳点抑制）
+  all         - 运行上述全部实验
+输出：
+  paper_error_curves.csv      - 与论文上传格式一致的误差曲线数据
+  paper_summary_metrics.csv    - 聚合指标汇总表
+  paper_summary_metrics.json   - 同上 JSON 格式
+"""
 from __future__ import annotations
 
 import argparse

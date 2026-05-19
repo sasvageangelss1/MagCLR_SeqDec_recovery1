@@ -19,12 +19,12 @@ def build_aug(cfg) -> AugmentConfig:
     return AugmentConfig(
         rotation_max_deg=float(a.get("rotation_max_deg", 20.0)),
         noise_sigma=float(a.get("noise_sigma", 0.01)),
-        crop_ratio_min=float(a.get("crop_ratio_min", 0.90)),
-        crop_ratio_max=float(a.get("crop_ratio_max", 1.00)),
-        grid_jitter_prob=float(a.get("grid_jitter_prob", 0.20)),
-        grid_jitter_std=float(a.get("grid_jitter_std", 0.04)),
-        channel_dropout_prob=float(a.get("channel_dropout_prob", 0.0)),
-        channel_shuffle_prob=float(a.get("channel_shuffle_prob", 0.0)),
+        # crop_ratio_min=float(a.get("crop_ratio_min", 0.90)),
+        # crop_ratio_max=float(a.get("crop_ratio_max", 1.00)),
+        # grid_jitter_prob=float(a.get("grid_jitter_prob", 0.20)),
+        # grid_jitter_std=float(a.get("grid_jitter_std", 0.04)),
+        # channel_dropout_prob=float(a.get("channel_dropout_prob", 0.0)),
+        # channel_shuffle_prob=float(a.get("channel_shuffle_prob", 0.0)),
     )
 
 
