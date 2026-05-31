@@ -2,11 +2,11 @@ seed: 2026
 project_name: MagCLR-SeqDec
 
 paths:
-  data_root: data/npy_output_wenguan1
+  data_root: data/npy_outputxinxi
   output_root: experiments
 
 scene:
-  name: scenario_2
+  name: scenario_1
   # scene_filter can be a substring such as "信息" or "文管". Empty means use all files under split dirs.
 #  scene_filter: "信息"
 
@@ -82,6 +82,15 @@ retrieval:
   # Retriever backend: "numpy" (brute-force, default) or "faiss" (FAISS IndexFlatIP/IndexFlatL2).
   backend: numpy
 
+pdr:
+  # IMU-based Pedestrian Dead Reckoning baseline parameters.
+  gyro_weight: 0.97    # DEPRECATED — kept for compat; use comp_alpha instead.
+  prominence: 0.50       # Step detection peak prominence threshold (standardized units).
+  min_interval: 15      # Minimum raw samples between detected steps.
+  step_length: 0.65    # Fixed step length in metres (used by step-based PDR; not used by gyro-PDR).
+  gyro_lpf_alpha: 0.85  # IIR low-pass alpha on gyro Z before integration (higher = smoother).
+  comp_alpha: 1.0      # Complementary-filter gyro weight (1.0 = pure gyro; <1 = fuse magnetometer).
+
 seqdec:
   k: 3
   tau: 0.30
@@ -103,7 +112,7 @@ evaluation:
 backbone_compare:
   # Thesis E1: supervised training only, no contrastive pretraining.
   backbones: [rnn, lstm, cnn_tcn, convnext_lite_1d]
-  epochs: 80
+  epochs: 150
   batch_size: 128
   lr: 0.001
   min_lr: 0.00001

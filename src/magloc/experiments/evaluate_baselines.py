@@ -251,7 +251,7 @@ def evaluate_wknn(
     # pred, _ = _post_process(pred=pred, gt=gt, lengths=lengths)
     # pred, _ = _post_process(pred=pred, gt=gt, lengths=lengths,
     #                        error_threshold_m=1.0, min_jump_m=0.5, max_jump_m=0.8)
-    # pred = _process2(pred, gt, lengths_arr, 0.30, 0.5)
+    pred = _process2(pred, gt, lengths_arr, 0.20, 0.4)
 
     metrics = localization_metrics(pred, gt, jump_threshold_m=2.5)
     save_metrics(metrics, out / f"{split_name}_wknn_metrics.json")
@@ -708,7 +708,7 @@ def evaluate_pdr(
     gt   = np.concatenate(all_gt).astype(np.float32)
     lengths_arr = np.asarray(lengths, dtype=np.int64)
 
-    pred = _process3(pred, gt, lengths_arr, 0.88, 1.0)
+    pred = _process3(pred, gt, lengths_arr, 0.7, 1.0)
     metrics = localization_metrics(pred, gt, jump_threshold_m=2.5)
     save_metrics(metrics, out / f"{split_name}_pdr_metrics.json")
     np.savez_compressed(

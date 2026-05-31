@@ -30,18 +30,18 @@ data/npy_output/test/*.npy
 ## 3. 快速自检
 
 ```bash
-set PYTHONPATH=$PWD/src
+set PYTHONPATH=%cd%\src
 python scripts/smoke_test.py
 ```
 
 ## 4. 单场景复现顺序
 
 ```bash
-set PYTHONPATH=$PWD/src
+set PYTHONPATH=%cd%\src
 python scripts/train_pretrain.py --config configs/base.yaml
-python scripts/train_regression.py --config configs/base.yaml --pretrained-ckpt experiments/scenario_1/pretrain/pretrain_best.pth
+python scripts/train_regression.py --config configs/base.yaml --pretrained-ckpt experiments/scenario_2/pretrain/pretrain_best.pth
 python scripts/train_regression.py --config configs/base.yaml
-python scripts/evaluate_regression.py --config configs/base.yaml --ckpt experiments/scenario_2/finetune/regression_best.pth
+python scripts/evaluate_regression.py --config configs/base.yaml --ckpt experiments/scenario_1/finetune/regression_best.pth
 python scripts/evaluate_retrieval.py --config configs/base.yaml --encoder-ckpt experiments/scenario_2/pretrain/pretrain_best.pth
 python scripts/evaluate_seqdec.py --config configs/base.yaml --encoder-ckpt experiments/scenario_2/pretrain/pretrain_best.pth
 ```
@@ -63,7 +63,7 @@ python scripts/evaluate_seqdec.py --config configs/base.yaml --encoder-ckpt expe
 该实验对应论文第 3.7.2 节，不使用对比学习预训练，四种网络共享同一输入构造、监督回归头、训练策略和评价指标。
 
 ```bash
-export PYTHONPATH=$PWD/src
+set PYTHONPATH=%cd%\src
 python scripts/run_backbone_compare.py --config configs/base.yaml
 ```
 
@@ -144,6 +144,15 @@ python scripts/run_paper_experiments.py --config configs/base.yaml --experiments
 python scripts/run_paper_experiments.py --config configs/base.yaml --experiments transition
 ```
 
+# WKNN
+python scripts/evaluate_wknn.py configs/base.yaml 
+
+# PDR
+python scripts/evaluate_pdr.py configs/base.yaml 
+
+# 直接用 FAISS 加速检索
+python scripts/evaluate_wknn.py configs/base.yaml --output-dir experiments/scenario_1/eval_wknn
+# （在 base.yaml 中设 retrieval.backend: faiss）
 ### 只汇总已有结果，不重复训练
 
 ```bash
@@ -224,3 +233,30 @@ python scripts/evaluate_retrieval.py \
 python scripts/evaluate_seqdec.py \
     --config configs/base.yaml \
     --encoder-ckpt experiments/<scene>/pretrain/pretrain_best.pth
+
+#新数据格式增加了5列后面的内容
+df["magX"].values,
+df["magY"].values,
+df["magZ"].values,
+pos_x,
+pos_y,
+df['epochMillis'],
+df['accX'].values,
+df['accY'].values,
+df['accZ'].values,
+df['gyroX'].values,
+df['gyroY'].values,
+df['gyroZ'].values,
+df['gravityX'].values,
+df['gravityY'].values,
+df['gravityZ'].values,
+
+#pdr 
+epochMillis 时间戳无效：你的数据里 epochMillis 全程只有 2 个不同值（0 和 131072ms），无法用于积分 → 改为用 traj_duration / (T-1) 估算采样率（100Hz fallback）
+磁力计航向不可靠：磁北方向和你的地面坐标系之间没有稳定的旋转关系（有的轨迹差 ~0°，有的差 ~160°）→ 改用陀螺仪 Z 轴积分航向
+
+PDR 算法流程
+步态检测：从 |acc - gravity| 的峰值中检测步态（纯 numpy，不依赖 scipy）
+航向积分：用陀螺仪 Z 轴角速率积分航向，时间步长用轨迹持续时间估算
+累积行走：用 GT 弧长（避免路径积分漂移） + 陀螺仪航向
+对齐：global scale + centroid translation 对齐到 GT
